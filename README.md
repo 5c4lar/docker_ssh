@@ -12,6 +12,8 @@ git clone https://github.com/ucasqsl/docker_ssh.git
 cd docker_ssh
 cat ~/.ssh/authorized_keys > authorized_keys
 docker build -t docker_ssh .
+# Use following for podman
+# podman build -t docker_ssh . -f Dockerfile --format docker
 cd /path/to/your/workdir
 #substitute 30022 with any port your want
 docker run -it -d -w /work -v `pwd`:/work --name ssh_container -p 30022:22 docker_ssh
