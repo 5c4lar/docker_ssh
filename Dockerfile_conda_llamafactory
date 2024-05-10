@@ -1,0 +1,43 @@
+FROM conda_torch
+
+COPY sources.list /etc/apt/sources.list
+
+RUN apt update && apt install -y openssh-server sudo
+
+RUN apt install -y git wget python3-pip fish curl tmux
+
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+RUN chsh -s /usr/bin/fish
+
+RUN service ssh start
+
+EXPOSE 22
+
+ENV PATH=/root/miniconda3/bin:${PATH}
+
+SHELL ["conda", "run", "-n", "torch", "/bin/bash", "-c"]
+
+RUN pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+
+RUN pip install --no-deps trl peft accelerate bitsandbytes
+
+ADD https://api.github.com/repos/hiyouga/LLaMA-Factory/git/refs/heads/main version.json
+
+RUN git clone https://github.com/hiyouga/LLaMA-Factory -b main --depth 1 /app 
+
+WORKDIR /app
+
+RUN pip install -r requirements.txt
+RUN pip install -e .[deepspeed,metrics,bitsandbytes,qwen]
+
+VOLUME [ "/root/.cache/huggingface/", "/app/data", "/app/output" ]
+EXPOSE 7860
+
+COPY authorized_keys /root/.ssh/authorized_keys
+
+RUN chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys
+
+CMD ["sh","-c","/usr/sbin/sshd -D"]
+
+
